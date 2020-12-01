@@ -9,7 +9,7 @@ import (
 )
 
 func ReadInput(day int) string {
-	content, err := ioutil.ReadFile(fmt.Sprintf("input/day-%02d.txt", day))
+	content, err := ioutil.ReadFile(fmt.Sprintf("input/day%02d.txt", day))
 	if err != nil {
 		log.Fatal(err)
 	}
