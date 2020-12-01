@@ -1,14 +1,15 @@
 package input
 
 import (
+	"fmt"
 	"io/ioutil"
 	"log"
 	"strconv"
 	"strings"
 )
 
-func ReadInput() string {
-	content, err := ioutil.ReadFile("input.txt")
+func ReadInput(day int) string {
+	content, err := ioutil.ReadFile(fmt.Sprintf("input/day-%02d.txt", day))
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -16,8 +17,8 @@ func ReadInput() string {
 	return string(content)
 }
 
-func ReadInts() []int {
-	lines := strings.Split(ReadInput(), "\n")
+func ReadInts(day int) []int {
+	lines := strings.Split(ReadInput(day), "\n")
 	var nums []int
 	for _, line := range lines {
 		num, err := strconv.Atoi(line)
