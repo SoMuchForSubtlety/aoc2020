@@ -31,3 +31,7 @@ func ReadInts(day int) []int {
 
 	return nums
 }
+
+func ReadLines(day int) []string {
+	return strings.Split(ReadInput(day), "\n")
+}
