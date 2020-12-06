@@ -10,7 +10,7 @@ import (
 )
 
 func main() {
-	passports := strings.Split(input.ReadInput(4), "\n\n")
+	passports := strings.Split(input.Read(4), "\n\n")
 
 	var invalid1 int
 	var valid2 int

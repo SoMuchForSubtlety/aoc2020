@@ -8,7 +8,7 @@ import (
 	"strings"
 )
 
-func ReadInput(day int) string {
+func Read(day int) string {
 	content, err := ioutil.ReadFile(fmt.Sprintf("input/day%02d.txt", day))
 	if err != nil {
 		log.Fatal(err)
@@ -18,7 +18,7 @@ func ReadInput(day int) string {
 }
 
 func ReadInts(day int) []int {
-	lines := strings.Split(ReadInput(day), "\n")
+	lines := strings.Split(Read(day), "\n")
 	var nums []int
 	for _, line := range lines {
 		num, err := strconv.Atoi(line)
@@ -33,5 +33,5 @@ func ReadInts(day int) []int {
 }
 
 func ReadLines(day int) []string {
-	return strings.Split(ReadInput(day), "\n")
+	return strings.Split(Read(day), "\n")
 }
