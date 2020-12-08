@@ -8,6 +8,21 @@ import (
 	"github.com/SoMuchForSubtlety/aoc2020/go/pkg/input"
 )
 
+func main() {
+	tape := loadTape(input.ReadLines(8))
+
+	c := Console{tape: tape}
+
+	c.run(loopBreakpoint(len(tape)))
+	fmt.Println("part 1:", c.acc)
+	c.reset()
+
+	graph, final := buildGraph(tape)
+	graph.patchInstruction(final)
+	c.run()
+	fmt.Println("Part 2:", c.acc)
+}
+
 func loadTape(lines []string) []*Instruction {
 	var tape []*Instruction
 	for _, line := range lines {
@@ -21,10 +36,10 @@ func loadTape(lines []string) []*Instruction {
 	return tape
 }
 
-func loopBreakpoint() func(c *Console) bool {
-	executed := make(map[int]bool)
+func loopBreakpoint(tapeLength int) func(c *Console) bool {
+	executed := make([]bool, tapeLength)
 	return func(c *Console) bool {
-		if _, ok := executed[c.pointer]; ok {
+		if executed[c.pointer] {
 			return true // break if we executed this instruction already
 		}
 		executed[c.pointer] = true
@@ -34,7 +49,7 @@ func loopBreakpoint() func(c *Console) bool {
 
 func buildGraph(tape []*Instruction) (Graph, *Node) {
 	graph := Graph{
-		nodes: make(map[int]*Node),
+		nodes: make([]*Node, len(tape)),
 		tape:  tape,
 	}
 
@@ -56,47 +71,6 @@ func buildGraph(tape []*Instruction) (Graph, *Node) {
 	return graph, final
 }
 
-func main() {
-	tape := loadTape(input.ReadLines(8))
-
-	c := Console{tape: tape}
-
-	c.run(loopBreakpoint())
-	fmt.Println("part 1:", c.acc)
-	c.reset()
-
-	graph, final := buildGraph(tape)
-	starts := final.startingPoints()
-
-	var patched bool
-	for _, node := range graph.nodes {
-		if patched {
-			break
-		}
-		var potentialNext int
-		switch node.op.op {
-		case "jmp":
-			potentialNext = node.location + 1
-		case "nop":
-			potentialNext = node.location + node.op.arg
-		}
-		for _, start := range starts {
-			if start.location == potentialNext && !start.folowedBy(node) && graph.nodes[0].folowedBy(node) {
-				if node.op.op == "jmp" {
-					node.op.op = "nop"
-				} else {
-					node.op.op = "jmp"
-				}
-				patched = true
-				break
-			}
-		}
-	}
-
-	c.run()
-	fmt.Println("Part 2:", c.acc)
-}
-
 type Node struct {
 	location int
 	op       *Instruction
@@ -116,20 +90,17 @@ func (n *Node) startingPoints() []*Node {
 	return starts
 }
 
-func (n *Node) folowedBy(n2 *Node, visited ...map[int]bool) bool {
-	if visited == nil {
-		visited = append(visited, make(map[int]bool))
-	}
-	if _, ok := visited[0][n.location]; ok {
+func (n *Node) folowedBy(n2 *Node, visited []bool) bool {
+	if visited[n.location] {
 		return false
 	}
-	visited[0][n.location] = true
+	visited[n.location] = true
 	if n.next == n2 {
 		return true
 	} else if n.next == nil {
 		return false
 	}
-	return n.next.folowedBy(n2, visited[0])
+	return n.next.folowedBy(n2, visited)
 }
 
 type Instruction struct {
@@ -148,7 +119,7 @@ func (i Instruction) next() int {
 }
 
 type Graph struct {
-	nodes map[int]*Node
+	nodes []*Node
 	tape  []*Instruction
 }
 
@@ -156,12 +127,35 @@ func (g Graph) get(i int) *Node {
 	if i >= len(g.tape) || i < 0 {
 		return nil
 	}
-	node, ok := g.nodes[i]
-	if !ok {
+	node := g.nodes[i]
+	if node == nil {
 		node = &Node{op: g.tape[i], location: i}
 		g.nodes[i] = node
 	}
 	return node
+}
+
+func (g Graph) patchInstruction(final *Node) {
+	starts := final.startingPoints()
+	for _, node := range g.nodes {
+		var potentialNext int
+		switch node.op.op {
+		case "jmp":
+			potentialNext = node.location + 1
+		case "nop":
+			potentialNext = node.location + node.op.arg
+		}
+		for _, start := range starts {
+			if start.location == potentialNext && g.nodes[0].folowedBy(node, make([]bool, len(g.tape))) {
+				if node.op.op == "jmp" {
+					node.op.op = "nop"
+				} else {
+					node.op.op = "jmp"
+				}
+				return
+			}
+		}
+	}
 }
 
 type Console struct {
