@@ -33,5 +33,10 @@ func ReadInts(day int) []int {
 }
 
 func ReadLines(day int) []string {
-	return strings.Split(Read(day), "\n")
+	lines := strings.Split(Read(day), "\n")
+	for i := range lines {
+		lines[i] = strings.TrimSpace(lines[i])
+	}
+
+	return lines
 }
