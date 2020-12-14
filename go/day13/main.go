@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"io"
 	"log"
 	"math/big"
 	"strconv"
@@ -13,8 +12,6 @@ import (
 
 func main() {
 	lines := input.ReadLines(13)
-
-	_ = i
 
 	minStart, err := strconv.Atoi(lines[0])
 	if err != nil {
