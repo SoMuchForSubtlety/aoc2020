@@ -3,19 +3,46 @@ package main
 import (
 	"fmt"
 	"strconv"
+
+	"github.com/SoMuchForSubtlety/aoc2020/go/pkg/input"
 )
 
-type Cup struct {
-	label int
-	next  *Cup
+func main() {
+	in := input.Read(23)
+	cups := playGame(in, false)
+	fmt.Println("part 1:", part1(cups))
+
+	cups = playGame(in, true)
+	fmt.Println("part 2:", cups[1]*cups[cups[1]])
 }
 
-func (c *Cup) getDestinationLabel(three *Cup, max int) int {
-	i := c.label - 1
+func playGame(input string, part2 bool) []int {
+	cups, current := createCups(input, part2)
+	rounds, maxCup := 100, 9
+	if part2 {
+		rounds, maxCup = 10_000_000, 1_000_000
+	}
+
+	for i := 0; i < rounds; i++ {
+		three := cups[current]
+		cups[current] = cups[cups[cups[three]]]
+
+		destination := getDestinationLabel(cups, current, three, maxCup)
+		cups[cups[cups[three]]] = cups[destination]
+		cups[destination] = three
+
+		current = cups[current]
+	}
+
+	return cups
+}
+
+func getDestinationLabel(cups []int, current, next, max int) int {
+	i := current - 1
 	if i < 1 {
 		i = max
 	}
-	for i == three.label || i == three.next.label || i == three.next.next.label {
+	for i == next || i == cups[next] || i == cups[cups[next]] {
 		i--
 		if i < 1 {
 			i = max
@@ -24,93 +51,39 @@ func (c *Cup) getDestinationLabel(three *Cup, max int) int {
 	return i
 }
 
-func (c *Cup) PickUpThree() *Cup {
-	start := c.next
-	c.next = start.next.next.next
-	return start
-}
-
-func (c *Cup) PlaceThree(start *Cup) {
-	start.next.next.next = c.next
-	c.next = start
-}
-
-func (c *Cup) Part1() string {
-	if c.label != 1 {
-		panic("wrong cup")
-	}
-
-	c = c.next
+func part1(cups []int) string {
+	c := 1
 	var out string
-	for c.label != 1 {
-		out += strconv.Itoa(c.label)
-		c = c.next
+	for cups[c] != 1 {
+		c = cups[c]
+		out += strconv.Itoa(c)
 	}
 	return out
 }
 
-func (c *Cup) Part2() int {
-	if c.label != 1 {
-		panic("wrong cup")
+func createCups(input string, part2 bool) ([]int, int) {
+	cups := make([]int, 9+1)
+	if part2 {
+		cups = make([]int, 1_000_000+1)
 	}
-
-	return c.next.label * c.next.next.label
-}
-
-func CreateCups(input string, part2 bool) (map[int]*Cup, *Cup) {
-	cups := make(map[int]*Cup)
-	var start, prev *Cup
-	var max int
+	var start, prev int
 	for i, num := range input {
 		label, _ := strconv.Atoi(string(num))
-		if label > max {
-			max = label
-		}
-		cup := &Cup{label: label}
-		cups[cup.label] = cup
 		if i == 0 {
-			start = cup
+			start = label
 		} else {
-			prev.next = cup
+			cups[prev] = label
 		}
-
-		prev = cup
+		prev = label
 	}
 
 	if part2 {
-		for i := max + 1; i <= 1_000_000; i++ {
-			cup := &Cup{label: i}
-			cups[cup.label] = cup
-			prev.next = cup
-			prev = cup
+		for i := 10; i <= 1_000_000; i++ {
+			cups[prev] = i
+			prev = i
 		}
 	}
-	prev.next = start
+	cups[prev] = start
 
 	return cups, start
-}
-
-func PlayGame(input string, part2 bool) map[int]*Cup {
-	index, current := CreateCups(input, part2)
-	rounds, maxCup := 100, 9
-	if part2 {
-		rounds, maxCup = 10_000_000, 1_000_000
-	}
-
-	for i := 0; i < rounds; i++ {
-		three := current.PickUpThree()
-		destination := index[current.getDestinationLabel(three, maxCup)]
-		destination.PlaceThree(three)
-		current = current.next
-	}
-
-	return index
-}
-
-func main() {
-	cups := PlayGame("974618352", false)
-	fmt.Println("part 1:", cups[1].Part1())
-
-	cups = PlayGame("974618352", true)
-	fmt.Println("part 2:", cups[1].Part2())
 }
